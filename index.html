@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quel jeu on lance ?</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#181b25; --panel2:#1f2330; --line:#2a2f3f;
+    --text:#eef0f6; --muted:#8c93a8;
+    --green:#3ddc84; --orange:#ffab40; --red:#ff5252; --accent:#8b7bff;
+    --r:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 10% -10%,#1d2040 0,transparent 60%),var(--bg);
+    color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+  header{max-width:1100px;margin:0 auto;padding:32px 20px 8px}
+  h1{margin:0;font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:-.02em}
+  h1 span{background:linear-gradient(90deg,var(--accent),#ff7ad9);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);margin:6px 0 0}
+  .bar{max-width:1100px;margin:18px auto 0;padding:0 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  .tabs,.who{display:flex;gap:6px;background:var(--panel);padding:5px;border-radius:999px;border:1px solid var(--line)}
+  .tabs button,.who button{border:0;background:none;color:var(--muted);padding:8px 16px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer}
+  .tabs button.on,.who button.on{background:var(--accent);color:#fff}
+  .who-wrap{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.9rem}
+  main{max-width:1100px;margin:0 auto;padding:20px}
+  .list{display:grid;gap:18px}
+
+  .card{display:grid;grid-template-columns:130px minmax(0,1fr);gap:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .media{display:contents}
+  .cover{grid-row:1/3;width:130px;height:100%;min-height:195px;object-fit:cover;background:var(--panel2)}
+  .body{padding:16px 18px 10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,280px);gap:16px;align-items:start}
+  .gif{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;background:var(--panel2);grid-column:2;grid-row:1/3}
+  h2{margin:0;font-size:1.3rem;letter-spacing:-.01em}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .chip{font-size:.8rem;padding:3px 10px;border-radius:999px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  .chip b{color:var(--text)}
+  .votes{padding:0 18px 16px;grid-column:2;display:flex;gap:8px;flex-wrap:wrap}
+  .v{flex:1 1 90px;border:2px solid var(--line);background:var(--panel2);color:var(--muted);padding:10px 8px;border-radius:12px;font:inherit;font-weight:700;cursor:pointer;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .v i{width:14px;height:14px;border-radius:50%;display:block;background:currentColor;opacity:.9}
+  .v small{font-weight:500;font-size:.72rem}
+  .v:hover{transform:translateY(-2px)}
+  .v.g{color:var(--green)} .v.o{color:var(--orange)} .v.r{color:var(--red)}
+  .v.g.on{background:var(--green);border-color:var(--green)} .v.o.on{background:var(--orange);border-color:var(--orange)} .v.r.on{background:var(--red);border-color:var(--red)}
+  .v.on{color:#10131a} .v.on i{background:#10131a}
+  .others{display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .dot{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;color:var(--muted)}
+  .dot::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--line)}
+  .dot.c1::before{background:var(--green)} .dot.c2::before{background:var(--orange)} .dot.c3::before{background:var(--red)}
+
+  @media(max-width:760px){
+    .card{grid-template-columns:96px 1fr}
+    .cover{min-height:144px;width:96px}
+    .body{grid-template-columns:1fr}
+    .gif{grid-column:1;grid-row:auto}
+    .votes{grid-column:1 / -1;padding-top:6px}
+  }
+
+  /* Classement */
+  .rank{display:grid;gap:12px}
+  .row{display:grid;grid-template-columns:48px 64px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 16px 10px 12px}
+  .pos{font-size:1.4rem;font-weight:800;color:var(--muted);text-align:center}
+  .row:nth-child(1) .pos{color:#ffd54a}.row:nth-child(2) .pos{color:#cfd8dc}.row:nth-child(3) .pos{color:#d98a55}
+  .row img{width:64px;height:84px;object-fit:cover;border-radius:8px;background:var(--panel2)}
+  .rt{font-weight:700;font-size:1.1rem}
+  .rs{color:var(--muted);font-size:.85rem;margin-top:2px}
+  .stack{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--panel2);margin-top:8px;max-width:260px}
+  .stack span{display:block}
+  .badge{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:1.05rem;color:#10131a}
+  .empty{color:var(--muted);text-align:center;padding:40px}
+
+  /* Partage */
+  .share{max-width:1100px;margin:10px auto 60px;padding:0 20px}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px}
+  summary{cursor:pointer;font-weight:700}
+  details p{color:var(--muted);font-size:.92rem;margin:10px 0}
+  textarea{width:100%;min-height:70px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:.8rem ui-monospace,monospace}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 14px;border-radius:10px;font:inherit;font-weight:600;cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  .btn.danger:hover{border-color:var(--red);color:var(--red)}
+  #msg{color:var(--green);font-size:.88rem;min-height:1.2em}
+
+  .addbtn{border:0;background:linear-gradient(90deg,var(--accent),#ff7ad9);color:#fff;font:inherit;font-weight:700;padding:10px 18px;border-radius:999px;cursor:pointer}
+  .addbtn:hover{filter:brightness(1.1)}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .tag{font-size:.72rem;padding:2px 8px;border-radius:999px;background:#2a2450;color:#c3baff;border:1px solid #433a80}
+  .rm{background:none;border:0;color:var(--muted);cursor:pointer;font-size:.8rem;text-decoration:underline;padding:0;margin-left:6px}
+  .rm:hover{color:var(--red)}
+  dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:20px;padding:24px;width:min(460px,92vw)}
+  dialog::backdrop{background:rgba(0,0,0,.65)}
+  dialog h3{margin:0 0 14px}
+  label{display:block;font-size:.85rem;color:var(--muted);margin-top:12px}
+  input[type=text]{width:100%;margin-top:4px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+  input:focus{outline:2px solid var(--accent);border-color:transparent}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .recap{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 16px;line-height:1.8}
+  .recap b{display:inline-block;min-width:92px;color:var(--muted);font-weight:600}
+  .snip{margin-top:12px}
+  .err{color:var(--red);font-size:.85rem;min-height:1.1em;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Quel jeu <span>on lance ?</span></h1>
+  <p class="sub">Chacun vote pour chaque jeu : 🟢 un jour, 🟠 j'ai envie, 🔴 urgent ! Le classement se construit tout seul.</p>
+</header>
+
+<div class="bar">
+  <div class="tabs" id="tabs">
+    <button data-tab="games" class="on">Les jeux</button>
+    <button data-tab="rank">Classement</button>
+  </div>
+  <div class="toolbar">
+    <button class="addbtn" id="addGame">➕ Ajouter un jeu</button>
+    <div class="who-wrap">Je suis <div class="who" id="who"></div></div>
+  </div>
+</div>
+
+<main id="main"></main>
+
+<div class="share">
+  <details>
+    <summary>Récupérer les votes des autres (partage)</summary>
+    <p>Les votes sont enregistrés dans <b>ce navigateur</b>. Pour tout réunir : chacun copie son code ci-dessous et l'envoie au groupe, puis une personne (ou tout le monde) colle les codes reçus ici.</p>
+    <div class="btns">
+      <button class="btn" id="copyMine">📋 Copier mon code de votes</button>
+    </div>
+    <p>Coller le code d'un ami :</p>
+    <textarea id="importBox" placeholder="Coller ici un code de votes…"></textarea>
+    <div class="btns">
+      <button class="btn" id="doImport">⬇️ Importer</button>
+      <button class="btn danger" id="reset">Effacer tous les votes</button>
+    </div>
+    <div id="msg"></div>
+  </details>
+</div>
+
+<dialog id="dlg"></dialog>
+
+<script src="games.js"></script>
+<script>
+const LEVELS = [
+  {n:3, cls:"r", label:"Urgent !", color:"var(--red)"},
+  {n:2, cls:"o", label:"Envie",    color:"var(--orange)"},
+  {n:1, cls:"g", label:"Un jour",  color:"var(--green)"},
+];
+const KEY = "jeux-votes-v1", ME = "jeux-moi-v1";
+let votes = JSON.parse(localStorage.getItem(KEY) || "{}");   // {joueur: {idJeu: 1|2|3}}
+let me = localStorage.getItem(ME); if (!PLAYERS.includes(me)) me = PLAYERS[0];
+let tab = "games";
+let custom = JSON.parse(localStorage.getItem("jeux-ajouts-v1") || "[]");   // jeux ajoutés depuis la page
+const saveCustom = () => localStorage.setItem("jeux-ajouts-v1", JSON.stringify(custom));
+const allGames = () => [...GAMES, ...custom.filter(c => !GAMES.some(g => g.id === c.id))];
+const isCustom = id => !GAMES.some(g => g.id === id);
+
+const $ = s => document.querySelector(s);
+const save = () => localStorage.setItem(KEY, JSON.stringify(votes));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// Visuel de secours quand l'image manque (dégradé + initiales, couleur stable par jeu)
+function fallback(g, w, h) {
+  let hash = 0; for (const c of g.id) hash = (hash * 31 + c.charCodeAt(0)) % 360;
+  const ini = g.title.split(/\s+/).map(x => x[0]).join("").slice(0, 3).toUpperCase();
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><defs><linearGradient id='a' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='hsl(${hash},60%,38%)'/><stop offset='1' stop-color='hsl(${(hash+60)%360},55%,22%)'/></linearGradient></defs><rect width='100%' height='100%' fill='url(#a)'/><text x='50%' y='52%' fill='white' fill-opacity='.85' font-family='system-ui' font-weight='800' font-size='${Math.min(w,h)/3}' text-anchor='middle' dominant-baseline='middle'>${esc(ini)}</text></svg>`;
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+const img = (g, kind) => {
+  const src = kind === "cover" ? (g.cover || `media/covers/${g.id}.jpg`) : (g.gif || `media/gifs/${g.id}.gif`);
+  const [w, h] = kind === "cover" ? [260, 390] : [560, 315];
+  return `<img class="${kind}" loading="lazy" alt="${kind === "cover" ? "Jaquette de " : "Gameplay de "}${esc(g.title)}" src="${esc(src)}" onerror="this.onerror=null;this.src='${fallback(g, w, h)}'">`;
+};
+
+function stats(id) {
+  const c = {1:0, 2:0, 3:0}; let sum = 0, n = 0;
+  for (const p of PLAYERS) { const v = votes[p]?.[id]; if (v) { c[v]++; sum += v; n++; } }
+  return {c, n, avg: n ? sum / n : 0};
+}
+function color(avg) { // vert → orange → rouge selon la moyenne
+  return avg >= 2.5 ? "var(--red)" : avg >= 1.75 ? "var(--orange)" : "var(--green)";
+}
+
+function renderGames() {
+  $("#main").innerHTML = `<div class="list">` + allGames().map(g => {
+    const mine = votes[me]?.[g.id];
+    const others = PLAYERS.filter(p => p !== me).map(p => {
+      const v = votes[p]?.[g.id]; return `<span class="dot${v ? " c" + v : ""}">${esc(p)}</span>`;
+    }).join("");
+    return `<article class="card">
+      ${img(g, "cover")}
+      <div class="body">
+        <div>
+          <h2>${esc(g.title)}${isCustom(g.id) ? ` <span class="tag">ajouté${g.by ? " par " + esc(g.by) : ""}</span><button class="rm" data-rm="${esc(g.id)}">retirer</button>` : ""}</h2>
+          <div class="meta">
+            ${g.platform ? `<span class="chip">🎮 <b>${esc(g.platform)}</b></span>` : ""}
+            <span class="chip">⏱ <b>${esc(g.hours || "?")}</b></span>
+            ${g.genre ? `<span class="chip">${esc(g.genre)}</span>` : ""}
+          </div>
+          <div class="others">${others}</div>
+        </div>
+        ${img(g, "gif")}
+      </div>
+      <div class="votes">
+        ${LEVELS.slice().reverse().map(l => `<button class="v ${l.cls}${mine === l.n ? " on" : ""}" data-g="${esc(g.id)}" data-n="${l.n}" title="${l.label}"><i></i>${l.label}</button>`).join("")}
+      </div>
+    </article>`;
+  }).join("") + `</div>`;
+}
+
+function renderRank() {
+  const rows = allGames().map(g => ({g, ...stats(g.id)})).filter(r => r.n > 0)
+    .sort((a, b) => b.avg - a.avg || b.c[3] - a.c[3] || b.n - a.n || a.g.title.localeCompare(b.g.title));
+  if (!rows.length) { $("#main").innerHTML = `<div class="empty">Aucun vote pour l'instant. Allez dans « Les jeux » !</div>`; return; }
+  $("#main").innerHTML = `<div class="rank">` + rows.map((r, i) => {
+    const pct = k => (r.c[k] / r.n * 100) + "%";
+    const missing = PLAYERS.length - r.n;
+    return `<div class="row">
+      <div class="pos">${i + 1}</div>
+      ${img(r.g, "cover").replace('class="cover"', '')}
+      <div>
+        <div class="rt">${esc(r.g.title)}</div>
+        <div class="rs">🔴 ${r.c[3]} · 🟠 ${r.c[2]} · 🟢 ${r.c[1]} · ${r.g.platform ? esc(r.g.platform) + " · " : ""}⏱ ${esc(r.g.hours || "?")}${missing ? ` · ⌛ ${missing} vote${missing > 1 ? "s" : ""} manquant${missing > 1 ? "s" : ""}` : ""}</div>
+        <div class="stack"><span style="width:${pct(3)};background:var(--red)"></span><span style="width:${pct(2)};background:var(--orange)"></span><span style="width:${pct(1)};background:var(--green)"></span></div>
+      </div>
+      <div class="badge" style="background:${color(r.avg)}">${r.avg.toFixed(1)}</div>
+    </div>`;
+  }).join("") + `</div>`;
+}
+
+function render() {
+  $("#who").innerHTML = PLAYERS.map(p => `<button data-p="${esc(p)}" class="${p === me ? "on" : ""}">${esc(p)}</button>`).join("");
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  tab === "games" ? renderGames() : renderRank();
+}
+
+document.addEventListener("click", e => {
+  const rm = e.target.closest("[data-rm]");
+  if (rm) { if (confirm("Retirer ce jeu de la liste (sur ce navigateur) ?")) { custom = custom.filter(c => c.id !== rm.dataset.rm); saveCustom(); render(); } return; }
+  const v = e.target.closest(".v"), p = e.target.closest("[data-p]"), t = e.target.closest("[data-tab]");
+  if (v) {
+    const {g, n} = v.dataset; votes[me] ??= {};
+    if (votes[me][g] == n) delete votes[me][g]; else votes[me][g] = +n;   // re-cliquer = annuler
+    save(); const y = scrollY; render(); scrollTo(0, y);
+  } else if (p) { me = p.dataset.p; localStorage.setItem(ME, me); render(); }
+  else if (t) { tab = t.dataset.tab; render(); }
+});
+
+// ---- Partage par code ----
+const say = m => { $("#msg").textContent = m; setTimeout(() => $("#msg").textContent = "", 4000); };
+const enc = o => btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+const dec = s => JSON.parse(decodeURIComponent(escape(atob(s.trim()))));
+$("#copyMine").onclick = async () => {
+  const code = enc({player: me, votes: votes[me] || {}, games: custom});
+  try { await navigator.clipboard.writeText(code); say(`Code de ${me} copié !`); }
+  catch { $("#importBox").value = code; say("Copiez le code ci-dessus."); }
+};
+$("#doImport").onclick = () => {
+  try {
+    const d = dec($("#importBox").value);
+    if (!PLAYERS.includes(d.player)) throw 0;
+    votes[d.player] = d.votes; save();
+    for (const g of d.games || []) if (g.id && g.title && !custom.some(c => c.id === g.id)) custom.push(g);
+    saveCustom(); $("#importBox").value = ""; render();
+    say(`Votes de ${d.player} importés (${Object.keys(d.votes).length} jeux).`);
+  } catch { say("Code invalide, ou prénom absent de la liste PLAYERS."); }
+};
+$("#reset").onclick = () => { if (confirm("Effacer tous les votes de ce navigateur ?")) { votes = {}; save(); render(); } };
+
+// ---- Ajouter un jeu ----
+const dlg = $("#dlg");
+const slug = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 24) || "jeu";
+function formStep(d = {}, err = "") {
+  dlg.innerHTML = `<h3>➕ Ajouter un jeu</h3>
+    <label>Titre *<input type="text" id="f_title" value="${esc(d.title || "")}" autocomplete="off"></label>
+    <div class="two">
+      <label>Plateforme<input type="text" id="f_platform" list="plats" value="${esc(d.platform || "")}" placeholder="PS5, Switch, PC…"></label>
+      <label>Durée<input type="text" id="f_hours" value="${esc(d.hours || "")}" placeholder="ex. 6 h 30"></label>
+    </div>
+    <label>Genre (facultatif)<input type="text" id="f_genre" value="${esc(d.genre || "")}" placeholder="ex. Aventure · Coop"></label>
+    <datalist id="plats"><option>PS5<option>PS4<option>Switch<option>Switch 2<option>PC<option>Xbox</datalist>
+    <div class="err">${err}</div>
+    <div class="btns"><button class="btn" data-act="cancel">Annuler</button><button class="addbtn" data-act="review">Continuer →</button></div>`;
+}
+function confirmStep(d) {
+  dlg.innerHTML = `<h3>On confirme ?</h3>
+    <div class="recap"><b>Titre</b>${esc(d.title)}<br><b>Plateforme</b>${esc(d.platform || "—")}<br><b>Durée</b>${esc(d.hours || "?")}<br><b>Genre</b>${esc(d.genre || "—")}<br><b>Ajouté par</b>${esc(me)}</div>
+    <p class="sub" style="font-size:.85rem">Le jeu apparaîtra tout de suite sur cette page, sans gif ni jaquette pour l'instant.</p>
+    <div class="btns"><button class="btn" data-act="edit">← Modifier</button><button class="addbtn" data-act="confirm">✅ Confirmer l'ajout</button></div>`;
+}
+let draft = {};
+$("#addGame").onclick = () => { draft = {}; formStep(); dlg.showModal(); $("#f_title").focus(); };
+dlg.addEventListener("click", e => {
+  const act = e.target.dataset.act; if (!act) return;
+  if (act === "cancel") dlg.close();
+  else if (act === "edit") formStep(draft);
+  else if (act === "review") {
+    draft = {title: $("#f_title").value.trim(), platform: $("#f_platform").value.trim(), hours: $("#f_hours").value.trim(), genre: $("#f_genre").value.trim()};
+    if (!draft.title) return formStep(draft, "Le titre est obligatoire.");
+    if (allGames().some(g => slug(g.title) === slug(draft.title))) return formStep(draft, "Ce jeu est déjà dans la liste.");
+    confirmStep(draft);
+  } else if (act === "confirm") {
+    let id = slug(draft.title); while (allGames().some(g => g.id === id)) id += "2";
+    const g = {id, ...draft, by: me}; custom.push(g); saveCustom();
+    dlg.innerHTML = `<h3>🎉 « ${esc(g.title)} » ajouté !</h3>
+      <p class="sub">Pour que les autres le voient aussi : envoyez-leur votre code (en bas de page, « partage »). Pour l'ajouter définitivement, collez cette ligne dans <code>games.js</code>, avec <code>media/covers/${esc(id)}.jpg</code> et <code>media/gifs/${esc(id)}.gif</code> :</p>
+      <textarea readonly id="snip">  { id: "${id}", title: "${esc(g.title).replace(/"/g, '\\"')}", platform: "${esc(g.platform)}", hours: "${esc(g.hours)}", genre: "${esc(g.genre)}" },</textarea>
+      <div class="btns"><button class="btn" data-act="copysnip">📋 Copier la ligne</button><button class="addbtn" data-act="cancel">Fermer</button></div>`;
+    tab = "games"; render();
+  } else if (act === "copysnip") { $("#snip").select(); navigator.clipboard?.writeText($("#snip").value); }
+});
+dlg.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("#f_title,#f_platform,#f_hours,#f_genre")) { e.preventDefault(); dlg.querySelector('[data-act="review"]').click(); } });
+
+render();
+</script>
+</body>
+</html>
