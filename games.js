@@ -19,4 +19,9 @@ const GAMES = [
   { id: "inside",    title: "Inside",                        platform: "Switch", hours: "3 h 30", genre: "Plateforme · Puzzle" },
   { id: "reanimal",  title: "Reanimal",                      platform: "PS5",    hours: "4 h 30", genre: "Aventure · Horreur" },
   { id: "re7",       title: "Resident Evil VII Biohazard",   platform: "PS4",    hours: "9 h",    genre: "Survival horror" },
+  { id: "princeofpersiathelostcro", title: "Prince of Persia : The Lost Crown", platform: "Switch", hours: "15h00", genre: "Metroidvania" },
+
+  { id: "thedarkpicturesmanofmeda", title: "The Dark Pictures : Man of Medan", platform: "PS4", hours: "4h00", genre: "Survival-Horror" },
+
+  { id: "metroidravenous", title: "Metroid Ravenous", platform: "Switch 2", hours: "10h00", genre: "Metroidvania" },
 ];
